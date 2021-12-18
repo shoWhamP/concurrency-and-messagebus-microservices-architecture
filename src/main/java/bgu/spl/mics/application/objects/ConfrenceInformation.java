@@ -13,13 +13,14 @@ public class ConfrenceInformation {
 
     private String name;
     private int date;
-    private List<Model> successfulModels=new LinkedList<Model>();
+    private List<Model> successfulModels;
     public ConfrenceInformation(String name, int date) {
     	this.name=name;
     	this.date=date;
     }
 
     public void init(){
+        successfulModels=new LinkedList<Model>();
         ConferenceService dobbi=new ConferenceService(name+"'s houseElf",this.date,this);
         Thread conference=new Thread(()->dobbi.run());
         conference.setName("conference");
