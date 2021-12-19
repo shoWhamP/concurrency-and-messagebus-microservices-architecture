@@ -31,12 +31,14 @@ public class GPUService extends MicroService {
     											if(tick.getTime()==-1){//need to end messageloop;
 													myGpu.kill();
 													terminate();}
-    											else if(myGpu.trainModel()) {
+												else{ 
+													boolean var=myGpu.trainModel();
+    											if(var) {
 													inProgress.getModel().setStatus(Status.Trained);
 													Model m=inProgress.getModel();
     												TrainModelEvent trained=new TrainModelEvent(m);
-    												bus.complete(inProgress, trained);
-													System.out.println("lvl up");
+    												complete(inProgress, trained);
+													System.out.println("lvl up"+inProgress.getModel().getName());
     												if(!gym.isEmpty()) {
     													inProgress=gym.remove();
     													Thread t2 = new Thread(()->{myGpu.divideToBatches(inProgress.getModel());
@@ -44,7 +46,7 @@ public class GPUService extends MicroService {
 															inProgress.getModel().setStatus(Status.Training);
         													myGpu.sendData();});//he is responsible of sending data to cluster.
         												t2.start();
-    												}
+    												}}
     												}
     	});//controls what happens when we get a tick.
     	subscribeEvent(TrainModelEvent.class, (TrainModelEvent trainee)->{
@@ -61,9 +63,9 @@ public class GPUService extends MicroService {
     	subscribeEvent(TestModelEvent.class, (TestModelEvent testee)->{
     										Model m=myGpu.testModel(testee.getModel());
     										m.setStatus(Status.Tested);
-											System.out.println("test over for "+inProgress.getModel().getName());
+											System.out.println("test over for "+testee.getModel().getName());
     										TestModelEvent tested=new TestModelEvent(m);
-    										bus.complete(testee, tested);
+    										complete(testee, tested);
     	});
 
     }

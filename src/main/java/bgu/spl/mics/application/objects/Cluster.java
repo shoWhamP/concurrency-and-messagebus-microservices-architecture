@@ -129,6 +129,7 @@ public class Cluster {
 		for(GPU g: GPUs) {
 			if(g.getId()==dest) {
 				g.addProcessedBatch(b);
+				//System.out.println(processedBatchesCount);
 				break;
 			}
 		}

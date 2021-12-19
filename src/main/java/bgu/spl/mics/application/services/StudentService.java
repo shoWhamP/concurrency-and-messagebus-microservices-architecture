@@ -48,7 +48,9 @@ public class StudentService extends MicroService {
     		Future<TestModelEvent>  tested = sendEvent(testhim);
     		PublishResultsEvent cnn= new PublishResultsEvent(tested.get().getModel());
     		Future <PublishResultsEvent> publishim = sendEvent(cnn);
-    		publishim.get();}
+    		if(publishim.get().getModel().isPublished())
+				System.out.println("published"+model.getName());
+			}
     	});
 		subscribeBroadcast(TickBroadcast.class, (TickBroadcast tick)->{
 			//System.out.println("Tick number"+ tick.getTime());

@@ -5,8 +5,9 @@ import bgu.spl.mics.application.objects.Model.Result;
 import bgu.spl.mics.application.objects.Student.Degree;
 import bgu.spl.mics.application.services.GPUService;
 
-import java.util.LinkedList;
 import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
 /**
  * Passive object representing a single GPU.
  * Add all the fields described in the assignment as private fields.
@@ -42,8 +43,8 @@ public class GPU {
     	else {this.capacity=8;
     		this.trainDuration=4;
     	}
-    	this.vRam=new LinkedList<DataBatch>();//check if its ok to do that
-    	this.unprocessed=new LinkedList<DataBatch>();
+    	this.vRam=new ConcurrentLinkedQueue<DataBatch>();//check if its ok to do that
+    	this.unprocessed=new ConcurrentLinkedQueue<DataBatch>();
     	this.GpuId=id;
     	id++;
 		init();
@@ -67,22 +68,25 @@ public class GPU {
     		else {
     			synchronized (unprocessed){
 				try {
-    			unprocessed.wait();
+    				unprocessed.wait();
     			} catch(InterruptedException e) {}}
     		}
     	}
-    	
+		//System.out.println("all data sent"+unprocessed.size());
     }
     
     public void addProcessedBatch(DataBatch d) {
     	//this is the method the cluster uses to add processed dataBatch
-    	vRam.add(d);
+    	if(d!=null)
+			vRam.add(d);
     }
     
     public boolean trainModel() {//maybe we will have a thread that will be incharge of this
     	//this is the method the gpu service uses to train the model with processed data need to be used only if vRam is not empty
-    	if(vRam.peek()!=null) {
+    	if(vRam.size()!=0) {
+			//System.out.println("Tick used");
     		cluster.incGpu();
+			//System.out.println(batchestoTrain+"  "+vRam.size());
     		vRam.peek().increaseTick();
     		if(vRam.peek().geTicks()==trainDuration) {
     			vRam.remove();
@@ -94,6 +98,7 @@ public class GPU {
     		}
     		if(batchestoTrain==0) {
     			cluster.saveModel(model.getName());
+				//System.out.println("returning true-done training");
     			return true;
     		}
     	}

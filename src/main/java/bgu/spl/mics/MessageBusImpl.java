@@ -63,7 +63,8 @@ public class MessageBusImpl implements MessageBus {
 			//System.out.println("Tick number"+((TickBroadcast) b).getTime());
 			}
 		for(MicroService m: micsQ) {
-			micsToMsgs.get(m).add(b);
+			if(micsToMsgs.get(m)!=null)
+				micsToMsgs.get(m).add(b);
 			synchronized (m){
 			m.notify();}
 		}

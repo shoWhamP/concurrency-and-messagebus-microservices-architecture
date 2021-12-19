@@ -29,7 +29,6 @@ public class ConfrenceInformation {
     }
     public void addModel(Model m) {
     	successfulModels.add(m);
-    	m.publish();
     }
     public List<Model> getSuccessfulModels(){return successfulModels;}
     public String getName() {return name;}

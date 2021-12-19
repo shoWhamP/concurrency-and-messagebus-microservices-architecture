@@ -38,8 +38,13 @@ public class ConferenceService extends MicroService {
 														terminate();}
     													});
     	subscribeEvent(PublishResultsEvent.class, (PublishResultsEvent pre)->{
-    		if(pre.getModel().getResult()==Result.Good)
-    			comicon.addModel(pre.getModel());
+    		if(pre.getModel().getResult()==Result.Good) {
+				comicon.addModel(pre.getModel());
+				pre.getModel().publish();
+			}
+			pre.read();
+			complete(pre,pre);
+
     	});
     }
 }
