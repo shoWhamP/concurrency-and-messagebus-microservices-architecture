@@ -32,27 +32,26 @@ public class Model {
     public String getName() {
     	return this.name;
     }
-    
 	public Data getData() {
 		return this.data;
 	}
-	
 	public Student getStudent() {
 		return this.student;
 	}
-	
 	public Status getStatus() {
 		return this.status;
 	}
 	public void setStatus(Status state) {status=state;}
-	
 	public void setResult(Result r) {this.results=r;}
 	public Result getResult() {
 		return this.results;
 	}
 	public void publish() {published=true;}
 	public boolean isPublished() {return published;}
-
 	public void setData(){this.data = new Data(this.type,this.size);}
-	
+	public void init(Student s){
+		this.student=s;
+		this.status =Status.PreTrained;
+		this.results=Result.None;
+	}
 }

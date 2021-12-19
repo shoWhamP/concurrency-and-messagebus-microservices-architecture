@@ -31,8 +31,6 @@ public class StudentService extends MicroService {
     @Override
     protected void initialize() {
         // TODO Implement this
-    	subscribeBroadcast(TickBroadcast.class, (TickBroadcast tick)->{if(tick.getTime()==-1)
-    																	terminate();});
     	subscribeBroadcast(PublishConferenceBroadcast.class, (PublishConferenceBroadcast pcb)->{
     		List<Model> toRead = pcb.getResults();
     		for(Model modely: toRead) {
@@ -44,15 +42,19 @@ public class StudentService extends MicroService {
     	}); //end of callback function
     	
     	Thread modelHandler = new Thread(()->{    	for(Model model:models) {
-    													TrainModelEvent scar = new TrainModelEvent(model);
-    													Future<TrainModelEvent> trained = sendEvent(scar);
-    													TestModelEvent testhim= new TestModelEvent(trained.get().getModel());
-    													Future<TestModelEvent>  tested = sendEvent(testhim);
-    													PublishResultsEvent cnn= new PublishResultsEvent(tested.get().getModel());
-    													Future <PublishResultsEvent> publishim = sendEvent(cnn);
-    													publishim.get();}
-    													
+    		TrainModelEvent scar = new TrainModelEvent(model);
+    		Future<TrainModelEvent> trained = sendEvent(scar);
+    		TestModelEvent testhim= new TestModelEvent(trained.get().getModel());
+    		Future<TestModelEvent>  tested = sendEvent(testhim);
+    		PublishResultsEvent cnn= new PublishResultsEvent(tested.get().getModel());
+    		Future <PublishResultsEvent> publishim = sendEvent(cnn);
+    		publishim.get();}
     	});
+		subscribeBroadcast(TickBroadcast.class, (TickBroadcast tick)->{
+			//System.out.println("Tick number"+ tick.getTime());
+			if(tick.getTime()==-1){
+				modelHandler.interrupt();//*****************
+				terminate();}});
     	modelHandler.start();
     	
     }

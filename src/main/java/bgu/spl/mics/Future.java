@@ -34,7 +34,10 @@ public class Future<T> {
 			synchronized (this){
 			try{
 			wait();}
-			catch (InterruptedException e){}
+			catch (InterruptedException e){
+				Thread.currentThread().stop();
+				//break;
+			}
 		}}
 		return result;
 	}

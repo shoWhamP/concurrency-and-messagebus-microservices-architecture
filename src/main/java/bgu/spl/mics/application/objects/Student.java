@@ -35,6 +35,7 @@ public class Student {
     public void init(){
         for(Model m:models){
             m.setData();
+            m.init(this);
         }
         StudentService servent= new StudentService("myMasterIs"+name, models, this);
         Thread study=new Thread(servent::run);
@@ -54,7 +55,6 @@ public class Student {
     }
     public void setPublications(int p) {publications=p;}
     public void setPapersRead(int r) {papersRead=r;}
-    public int getPapersRead() {
-    	return this.papersRead;
-    }
+    public int getPapersRead() {return this.papersRead;}
+    public List<Model> getModels() {return models;}
 }

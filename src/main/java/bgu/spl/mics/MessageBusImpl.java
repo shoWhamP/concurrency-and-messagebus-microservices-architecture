@@ -23,7 +23,7 @@ public class MessageBusImpl implements MessageBus {
 		// TODO Auto-generated constructor stub
 	}
 	@Override
-	public <T> void subscribeEvent(Class<? extends Event<T>> type, MicroService m) {
+	public synchronized <T> void subscribeEvent(Class<? extends Event<T>> type, MicroService m) {
 		// TODO Auto-generated method stub
 		if(evenToSubs.get(type)==null) {
 			Queue <MicroService> q = new ConcurrentLinkedQueue<MicroService>();
@@ -36,7 +36,7 @@ public class MessageBusImpl implements MessageBus {
 	}
 
 	@Override
-	public void subscribeBroadcast(Class<? extends Broadcast> type, MicroService m) {
+	public synchronized void subscribeBroadcast(Class<? extends Broadcast> type, MicroService m) {
 		// TODO Auto-generated method stub
 		if(broadcasToSubs.get(type)==null) {
 			Queue <MicroService> q = new ConcurrentLinkedQueue<MicroService>();
@@ -59,11 +59,12 @@ public class MessageBusImpl implements MessageBus {
 		// TODO Auto-generated method stub
 		//need to notify all the mcis that were subscribed incase they're waiting***
 		Queue <MicroService> micsQ=broadcasToSubs.get(b.getClass());
-		if(b.getClass()== TickBroadcast.class)
-			System.out.println("Tick number"+((TickBroadcast) b).getTime());
+		if(b.getClass()== TickBroadcast.class){
+			//System.out.println("Tick number"+((TickBroadcast) b).getTime());
+			}
 		for(MicroService m: micsQ) {
-			synchronized (m){
 			micsToMsgs.get(m).add(b);
+			synchronized (m){
 			m.notify();}
 		}
 	}
@@ -72,9 +73,9 @@ public class MessageBusImpl implements MessageBus {
 	@Override
 	public <T> Future<T> sendEvent(Event<T> e) {
 		// TODO Auto-generated method stub
+		while(evenToSubs.get(e.getClass())==null){}//???? maybe helps with that error you get when you try to send tick broacast and no one is registered yet
 		if(evenToSubs.get(e.getClass())!=null) {
 			// need to send the right microservice the event according to the robin shit
-			
 			MicroService m=evenToSubs.get(e.getClass()).remove();// remove the mics that get the current message
 			micsToMsgs.get(m).add(e);//adds the message to the mics msgQ
 			evenToSubs.get(e.getClass()).add(m);//re-adding the mics to the event micsQ- now it is last to recieve event
@@ -89,7 +90,7 @@ public class MessageBusImpl implements MessageBus {
 	}
 
 	@Override
-	public synchronized void  register(MicroService m) {
+	public synchronized void register(MicroService m) {
 		// TODO Auto-generated method stub
 		Queue <Message> q= new ConcurrentLinkedQueue<Message>();
 		micsToMsgs.put(m, q);
@@ -133,7 +134,4 @@ public class MessageBusImpl implements MessageBus {
 		}
 		return instance;
 	}
-
-	
-
 }

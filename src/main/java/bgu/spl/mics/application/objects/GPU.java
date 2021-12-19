@@ -16,6 +16,7 @@ public class GPU {
     /**
      * Enum representing the type of the GPU.
      */
+	private boolean kill=false;
 	private static int id=0;
     public enum Type {RTX3090, RTX2080, GTX1080}
     private int capacity;
@@ -54,15 +55,15 @@ public class GPU {
 		MicroService bitch=new GPUService("my gpu owner id is"+id+"and im his bitch",this);
 		Thread engine = new Thread(()->bitch.run());
 		engine.start();
-		//bitch.run();
 	}
 
-    public void sendData() {//maybe we will have a thread that will be incharge of this
+    public void sendData() {
     	//sends data to cluster.
-    	while(!unprocessed.isEmpty()) {
+    	while(!unprocessed.isEmpty()&& !kill) {
     		if(capacity!=0) {
     			cluster.passToCpu(unprocessed.remove());
     			capacity--;}
+				//System.out.println("sent to cluster");
     		else {
     			synchronized (unprocessed){
 				try {
@@ -75,14 +76,12 @@ public class GPU {
     
     public void addProcessedBatch(DataBatch d) {
     	//this is the method the cluster uses to add processed dataBatch
-    	if(capacity==0)
-    		throw new IllegalStateException("yaben shel zona havRam mfotszts");
     	vRam.add(d);
     }
     
     public boolean trainModel() {//maybe we will have a thread that will be incharge of this
     	//this is the method the gpu service uses to train the model with processed data need to be used only if vRam is not empty
-    	if(!vRam.isEmpty()) {
+    	if(vRam.peek()!=null) {
     		cluster.incGpu();
     		vRam.peek().increaseTick();
     		if(vRam.peek().geTicks()==trainDuration) {
@@ -130,5 +129,7 @@ public class GPU {
     
     //public int batchesLeft() {return batchestoTrain;}
     public int getId() {return GpuId;}
-    //public Model getModel() {return model;}
+    public void kill() {kill=true;
+		synchronized (unprocessed){
+		unprocessed.notify(); }}
 }

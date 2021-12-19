@@ -2,9 +2,10 @@ package bgu.spl.mics.application.objects;
 
 import bgu.spl.mics.application.objects.Data.Type;
 
-import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Passive object representing the cluster.
@@ -17,53 +18,56 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class Cluster {
 	private Queue<GPU> GPUs=new ConcurrentLinkedQueue<GPU>();
 	private Queue<CPU> CPUs=new ConcurrentLinkedQueue<CPU>();
-	private Queue<DataBatch> unproccessedImages=new ConcurrentLinkedQueue<DataBatch>();
-	private Queue<DataBatch> unproccessedText=new ConcurrentLinkedQueue<DataBatch>();
-	private Queue<DataBatch> unproccessedTabular=new ConcurrentLinkedQueue<DataBatch>();
-	private Queue<String> modelNames=new ConcurrentLinkedQueue<String>();
-	private int processedBatchesCount=0;
-	private int cpUsedTime=0;
-	private int gpUsedTime=0;
+	private Queue<DataBatch> unproccessedImages=new LinkedBlockingQueue<DataBatch>();
+	private Queue<DataBatch> unproccessedText=new LinkedBlockingQueue<DataBatch>();
+	private Queue<DataBatch> unproccessedTabular=new LinkedBlockingQueue<DataBatch>();
+	private Queue<String> modelNames=new LinkedBlockingQueue<String>();
+	private AtomicInteger processedBatchesCount=new AtomicInteger();
+	private AtomicInteger cpUsedTime=new AtomicInteger();
+	private AtomicInteger gpUsedTime=new AtomicInteger();
 	/**
      * Retrieves the single instance of this class.
      */
-	private static Cluster cluster=new Cluster();
+	private static Cluster instance=null;
 	private Cluster() {
-		this.modelNames=new LinkedList<String>();
-		this.cpUsedTime=0;
-		this.gpUsedTime=0;
-		this.processedBatchesCount=0;
 	}
 	public static Cluster getInstance() {
-		return new Cluster();
+		if(instance==null){
+			instance=new Cluster();
+		}
+		return instance;
 	}
 	public void regGpu(GPU gpu){GPUs.add(gpu);}
 	public void regCpu(CPU cpu){CPUs.add(cpu);}
 
 	public void passToCpu(DataBatch b) {
-		if(b.getData().GetType()==Type.Images)
+		if(b.getData().GetType()==Type.Images){
 			unproccessedImages.add(b);
-		if(b.getData().GetType()==Type.Tabular)
+			}
+		if(b.getData().GetType()==Type.Tabular){
 			unproccessedTabular.add(b);
-		if(b.getData().GetType()==Type.Text)
+			;}
+		if(b.getData().GetType()==Type.Text){
 			unproccessedText.add(b);
+			;}
+		//System.out.println("data received!"+unproccessedImages.isEmpty()+unproccessedText.isEmpty()+unproccessedTabular.isEmpty());
 	}
 	
-	public DataBatch getNextData(int cores) {
+	public synchronized DataBatch getNextData(int cores) {
 		double dice=Math.random();
 		if(cores==32) {
-			if(!unproccessedImages.isEmpty() & dice>=0.15 )
+			if(!unproccessedImages.isEmpty() & dice>=0.6)
 				return unproccessedImages.remove();
-			else if(!unproccessedText.isEmpty() & dice >= 0.3)
+			else if(!unproccessedText.isEmpty() & dice >= 0.4)
 				return unproccessedText.remove();
 			else if(!unproccessedTabular.isEmpty())
 				return unproccessedTabular.remove();
-			else return null;
+			return null;
 		}
 		if(cores==16) {
 			if(!unproccessedImages.isEmpty() & dice>=0.4 )
 				return unproccessedImages.remove();
-			else if(!unproccessedText.isEmpty() & dice >= 0.2)
+			else if(!unproccessedText.isEmpty() & dice >= 0.5)
 				return unproccessedText.remove();
 			else if(!unproccessedTabular.isEmpty())
 				return unproccessedTabular.remove();
@@ -113,13 +117,14 @@ public class Cluster {
 		}
 	
 	public boolean hasData(){
-		if(unproccessedImages.size()!=0|unproccessedTabular.size()!=0|unproccessedText.size()!=0)
+		if(!unproccessedImages.isEmpty()||!unproccessedTabular.isEmpty()||!unproccessedText.isEmpty())
 			return true;
-		else return false;
+		//System.out.println("return false from hasData");
+		return false;
 	}
 	
 	public void passToGpu(DataBatch b) {
-		processedBatchesCount++;
+		processedBatchesCount.incrementAndGet();
 		int dest=b.getOrigin();
 		for(GPU g: GPUs) {
 			if(g.getId()==dest) {
@@ -132,9 +137,9 @@ public class Cluster {
 		modelNames.add(name);
 	}
 	public Queue<String> getTrainedModel() {return modelNames;}
-	public void incPu() {cpUsedTime++;}
-	public int getUsedCpuTime() {return cpUsedTime;}
-	public void incGpu() {gpUsedTime++;}
-	public int getUsedGpuTime() {return gpUsedTime;}
-	public int getBatchCounter() {return this.processedBatchesCount;}
+	public void incPu() {cpUsedTime.incrementAndGet();}
+	public AtomicInteger getUsedCpuTime() {return cpUsedTime;}
+	public void incGpu() {gpUsedTime.incrementAndGet();}
+	public int getUsedGpuTime() {return gpUsedTime.incrementAndGet();}
+	public AtomicInteger getBatchCounter() {return this.processedBatchesCount;}
 }

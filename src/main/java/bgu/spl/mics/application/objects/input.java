@@ -94,14 +94,10 @@ public class input {
 
         for(ConfrenceInformation c:conferences)
             c.init();
-        for(Student s:students)
-            s.init();
+        for(Student s:students){
+            s.init();}
         TimeService slave=new TimeService(tickTime,duration);
-        //Thread clock=new Thread(()->slave.run());
-        slave.run();
-
+        Thread clock = new Thread(()->{slave.run();});
+        clock.start();
     }
-
-
-
 }

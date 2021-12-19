@@ -16,7 +16,7 @@ public class TimeService extends MicroService{
 	private int time=0;
 	private int speed;
 	private int duration;
-	
+
 	public TimeService(int speed, int duration) {
 		super("TimeService");
 		this.speed = speed;
@@ -25,30 +25,24 @@ public class TimeService extends MicroService{
 
 	@Override
 	protected void initialize() {
-		Timer timer=new Timer(true);
+		Timer timer = new Timer(true);
 		TimerTask tickFactory = new TimerTask() {
-			public void run(){
-				Broadcast tick= new TickBroadcast(time);
+			public void run() {
+				Broadcast tick = new TickBroadcast(time);
 				sendBroadcast(tick);
 				duration--;
 				time++;
-				if(duration==0) {
-					Broadcast finalCountDown= new TickBroadcast(-1);
+				if (duration == 0) {
+					Broadcast finalCountDown = new TickBroadcast(-1);
 					sendBroadcast(finalCountDown);
-				synchronized (timer){
-					timer.notify();
-				}
+					timer.cancel();
+					System.out.println("killing clock");
 				}
 			}
 		};
-		Date date=new Date();
+		Date date = new Date();
 		timer.schedule(tickFactory, date, speed);
-		synchronized (timer){
-			try{timer.wait();}
-			catch (InterruptedException e){}
+		terminate();
 		}
-		tickFactory.cancel();
-		terminate();//need to make sure it works this way//*****
 	}
 
-}

@@ -28,19 +28,22 @@ public class GPUService extends MicroService {
     protected void initialize() {
         // TODO Implement this
     	subscribeBroadcast(TickBroadcast.class,(TickBroadcast tick)->{
-    											if(tick.getTime()==-1)//need to end messageloop;
-    												terminate();
-    											if(myGpu.trainModel()) {
-    												Model m=inProgress.getModel();
-    												m.setStatus(Status.Trained);
+    											if(tick.getTime()==-1){//need to end messageloop;
+													myGpu.kill();
+													terminate();}
+    											else if(myGpu.trainModel()) {
+													inProgress.getModel().setStatus(Status.Trained);
+													Model m=inProgress.getModel();
     												TrainModelEvent trained=new TrainModelEvent(m);
     												bus.complete(inProgress, trained);
+													System.out.println("lvl up");
     												if(!gym.isEmpty()) {
     													inProgress=gym.remove();
-    													Thread t1 = new Thread(()->{myGpu.divideToBatches(inProgress.getModel());
-    													inProgress.getModel().setStatus(Status.Training);
-        												myGpu.sendData();});//he is responsible of sending data to cluster.
-        												t1.start();
+    													Thread t2 = new Thread(()->{myGpu.divideToBatches(inProgress.getModel());
+															System.out.println("started training of "+inProgress.getModel().getName());
+															inProgress.getModel().setStatus(Status.Training);
+        													myGpu.sendData();});//he is responsible of sending data to cluster.
+        												t2.start();
     												}
     												}
     	});//controls what happens when we get a tick.
@@ -48,15 +51,17 @@ public class GPUService extends MicroService {
     											gym.add(trainee);
     											if(inProgress==null || inProgress.getModel().getStatus()==Status.Trained ) {
     												this.inProgress=gym.remove();
-    												Thread t1 = new Thread(()->{myGpu.divideToBatches(trainee.getModel());
-    												trainee.getModel().setStatus(Status.Training);
-    												myGpu.sendData();});//he is responsible of sending data to cluster.
+    												Thread t1 = new Thread(()->{myGpu.divideToBatches(inProgress.getModel());
+    													System.out.println("started training of "+inProgress.getModel().getName());
+														inProgress.getModel().setStatus(Status.Training);
+    													myGpu.sendData();});//he is responsible of sending data to cluster.
     												t1.start();}
     																		
     	});//controls what happens when you get tme.
     	subscribeEvent(TestModelEvent.class, (TestModelEvent testee)->{
     										Model m=myGpu.testModel(testee.getModel());
     										m.setStatus(Status.Tested);
+											System.out.println("test over for "+inProgress.getModel().getName());
     										TestModelEvent tested=new TestModelEvent(m);
     										bus.complete(testee, tested);
     	});

@@ -28,10 +28,11 @@ public class CPU {
 		//R2D2.run();
 	}
 
-	public void proccessAndSend() {
+	public synchronized void proccessAndSend() {
 		Data.Type dataType;
-		if(cluster.hasData())//case there's no loaded Data
+		/*if(cluster.hasData()|| currentToProccess!=null)//case there's no loaded Data
 		{
+			System.out.println("proccessing...");
 			cluster.incPu();
 			if (currentToProccess == null) {
 				currentToProccess = cluster.getNextData(cores);	
@@ -42,6 +43,7 @@ public class CPU {
 				if (currentToProccess.geTicks() == Speed*4) {
 					currentToProccess.resetTick();
 					cluster.passToGpu(currentToProccess);
+					System.out.println("proccessed!");
 					currentToProccess=null;
 	
 				}
@@ -63,10 +65,42 @@ public class CPU {
 					currentToProccess=null;
 				}
 			}
+		}*/
+		if (currentToProccess == null) {
+			if (cluster.hasData()) {
+				currentToProccess = cluster.getNextData(cores);
+			}
 		}
+		if (currentToProccess != null) {
+			cluster.incPu();
+			dataType = currentToProccess.getData().GetType();
+			currentToProccess.increaseTick();
+			//System.out.println("proccessed!");
+			if (dataType == Data.Type.Images) {
+				if (currentToProccess.geTicks() == Speed * 4) {
+					currentToProccess.resetTick();
+					cluster.passToGpu(currentToProccess);
+					currentToProccess = null;
+				}
+			}
 
+			if (dataType == Data.Type.Text) {
+				if (currentToProccess.geTicks() == Speed * 2) {
+					currentToProccess.resetTick();
+					cluster.passToGpu(currentToProccess);
+					currentToProccess = null;
+				}
+			}
+
+			if (dataType == Data.Type.Tabular) {
+				if (currentToProccess.geTicks() == Speed) {
+					currentToProccess.resetTick();
+					cluster.passToGpu(currentToProccess);
+					currentToProccess = null;
+				}
+			}
+		}
 	}
-
 
 }
 

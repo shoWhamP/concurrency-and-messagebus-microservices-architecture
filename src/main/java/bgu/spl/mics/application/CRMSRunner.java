@@ -22,6 +22,7 @@ public class CRMSRunner {
         }
         input inp = new Gson().fromJson(reader,input.class);
         inp.initialaizer();
+
     }
 
 }
