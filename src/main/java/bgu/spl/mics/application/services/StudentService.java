@@ -32,6 +32,7 @@ public class StudentService extends MicroService {
     protected void initialize() {
         // TODO Implement this
     	subscribeBroadcast(PublishConferenceBroadcast.class, (PublishConferenceBroadcast pcb)->{
+			System.out.println(student.getName()+"is Reading");
     		List<Model> toRead = pcb.getResults();
     		for(Model modely: toRead) {
     			if(modely.getStudent().getName().equals(student.getName())) {
@@ -45,9 +46,11 @@ public class StudentService extends MicroService {
     		TrainModelEvent scar = new TrainModelEvent(model);
     		Future<TrainModelEvent> trained = sendEvent(scar);
     		TestModelEvent testhim= new TestModelEvent(trained.get().getModel());
+			model.setStatus(Model.Status.Trained);
     		Future<TestModelEvent>  tested = sendEvent(testhim);
     		PublishResultsEvent cnn= new PublishResultsEvent(tested.get().getModel());
-    		Future <PublishResultsEvent> publishim = sendEvent(cnn);
+    		model.setResult(cnn.getModel().getResult());
+			Future <PublishResultsEvent> publishim = sendEvent(cnn);
     		if(publishim.get().getModel().isPublished())
 				System.out.println("published"+model.getName());
 			}

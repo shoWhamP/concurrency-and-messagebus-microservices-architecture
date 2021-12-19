@@ -1,11 +1,17 @@
 package bgu.spl.mics.application.services;
-import bgu.spl.mics.application.objects.Model.Status;
-//import src.main.java.bgu.spl.mics.example.messages.TrainModelEvent;
+
 import bgu.spl.mics.MessageBusImpl;
 import bgu.spl.mics.MicroService;
-import bgu.spl.mics.application.objects.*;
-import bgu.spl.mics.example.messages.*;
-import java.util.*;
+import bgu.spl.mics.application.objects.GPU;
+import bgu.spl.mics.application.objects.Model;
+import bgu.spl.mics.application.objects.Model.Status;
+import bgu.spl.mics.example.messages.TestModelEvent;
+import bgu.spl.mics.example.messages.TickBroadcast;
+import bgu.spl.mics.example.messages.TrainModelEvent;
+
+import java.util.Queue;
+import java.util.concurrent.LinkedBlockingQueue;
+
 /**
  * GPU service is responsible for handling the
  * {@link TrainModelEvent} and {@link TestModelEvent},
@@ -18,7 +24,7 @@ public class GPUService extends MicroService {
 	private GPU myGpu;
 	private MessageBusImpl bus=MessageBusImpl.getInstance();
 	private TrainModelEvent inProgress=null;
-	private Queue<TrainModelEvent> gym=new LinkedList<TrainModelEvent>();
+	private Queue<TrainModelEvent> gym=new LinkedBlockingQueue<TrainModelEvent>();
     public GPUService(String name, GPU gpu) {
         super(name);
         this.myGpu=gpu;
@@ -31,7 +37,8 @@ public class GPUService extends MicroService {
     											if(tick.getTime()==-1){//need to end messageloop;
 													myGpu.kill();
 													terminate();}
-												else{ 
+												else{
+													//System.out.println("Tick number"+tick.getTime());
 													boolean var=myGpu.trainModel();
     											if(var) {
 													inProgress.getModel().setStatus(Status.Trained);
@@ -51,7 +58,7 @@ public class GPUService extends MicroService {
     	});//controls what happens when we get a tick.
     	subscribeEvent(TrainModelEvent.class, (TrainModelEvent trainee)->{
     											gym.add(trainee);
-    											if(inProgress==null || inProgress.getModel().getStatus()==Status.Trained ) {
+    											if(inProgress==null || inProgress.getModel().getStatus()==Status.Trained ||inProgress.getModel().getStatus()==Status.Tested ) {
     												this.inProgress=gym.remove();
     												Thread t1 = new Thread(()->{myGpu.divideToBatches(inProgress.getModel());
     													System.out.println("started training of "+inProgress.getModel().getName());

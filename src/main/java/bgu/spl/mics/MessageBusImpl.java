@@ -1,6 +1,6 @@
 package bgu.spl.mics;
 
-import bgu.spl.mics.example.messages.TickBroadcast;
+import bgu.spl.mics.example.messages.PublishConferenceBroadcast;
 
 import java.util.HashMap;
 import java.util.Queue;
@@ -59,8 +59,8 @@ public class MessageBusImpl implements MessageBus {
 		// TODO Auto-generated method stub
 		//need to notify all the mcis that were subscribed incase they're waiting***
 		Queue <MicroService> micsQ=broadcasToSubs.get(b.getClass());
-		if(b.getClass()== TickBroadcast.class){
-			//System.out.println("Tick number"+((TickBroadcast) b).getTime());
+		if(b.getClass()== PublishConferenceBroadcast.class){
+			System.out.println("publish results from conference"+((PublishConferenceBroadcast) b).getResults().isEmpty());
 			}
 		for(MicroService m: micsQ) {
 			if(micsToMsgs.get(m)!=null)
