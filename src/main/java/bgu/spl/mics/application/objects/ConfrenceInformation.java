@@ -21,11 +21,11 @@ public class ConfrenceInformation {
 
     public void init(){
         successfulModels=new LinkedList<Model>();
-        ConferenceService dobbi=new ConferenceService(name+"'s houseElf",this.date,this);
-        Thread conference=new Thread(()->dobbi.run());
-        conference.setName("conference");
-        conference.start();
-        //dobbi.run();
+//        ConferenceService dobbi=new ConferenceService(name+"'s houseElf",this.date,this);
+//        Thread conference=new Thread(()->dobbi.run());
+//        conference.setName("conference");
+//        conference.start();
+//        //dobbi.run();
     }
     public void addModel(Model m) {
     	successfulModels.add(m);

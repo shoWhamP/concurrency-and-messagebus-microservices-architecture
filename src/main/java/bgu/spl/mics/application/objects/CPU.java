@@ -18,7 +18,7 @@ public class CPU {
 	public CPU(int coresNum){
 		this.cores=coresNum;
 		this.Speed = 32/cores;
-		init();
+		//init();
 	}
 
 	public void init(){

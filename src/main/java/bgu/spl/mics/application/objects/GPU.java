@@ -30,7 +30,7 @@ public class GPU {
     private int GpuId;
     private int batchestoTrain=0;
     
-    GPU(Type t){
+    public GPU(Type t){
     	this.type=t;
     	this.cluster=Cluster.getInstance();
     	// define capacity on basis of type
@@ -47,7 +47,7 @@ public class GPU {
     	this.unprocessed=new ConcurrentLinkedQueue<DataBatch>();
     	this.GpuId=id;
     	id++;
-		init();
+		//init();
     	//******* need to start running his servant
 
     }
